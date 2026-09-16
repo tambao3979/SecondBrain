@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  name             String?
+  telegram_chat_id String?  @unique
+  events           Event[]
+  createdAt        DateTime @default(now())
+}
+
+model Event {
+  id                String     @id @default(uuid())
+  userId            String
+  type              EventType  @default(TASK)
+  title             String
+  formatted_content String     @db.Text
+  startAt           DateTime?
+  endAt             DateTime?
+  status            Status     @default(PENDING)
+  user              User       @relation(fields: [userId], references: [id])
+  reminders         Reminder[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+model Reminder {
+  id              String   @id @default(uuid())
+  eventId         String
+  remindAt        DateTime
+  isPreRemind     Boolean  @default(false)
+  qstashMessageId String?
+  status          Status   @default(PENDING)
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+enum EventType {
+  TASK
+  NOTE
+  MEETING
+  REMINDER
+}
+
+enum Status {
+  PENDING
+  SENT
+  CANCELLED
+}
